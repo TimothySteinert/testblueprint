@@ -16,13 +16,15 @@ blueprint:
       name: Failed Arm Service
       description: >
         Select the ESPHome service for failed_arm on your K1 keypad.
-      default: esphome.failed_arm
+      selector:
+        text:
 
     ready_update_service:
       name: Ready Update Service
       description: >
         Select the ESPHome service for ready_update on your K1 keypad.
-      default: esphome.ready_update
+      selector:
+        text:
 
 mode: parallel
 max_exceeded: silent
