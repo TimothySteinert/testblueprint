@@ -1,0 +1,41 @@
+blueprint:
+  name: HexaOne K1 Keypad (Ready-to-Arm Bridge)
+  description: >
+    Forwards Alarmo "ready to arm" updates to a HexaOne K1 Keypad ESPHome service.
+    Keeps the keypad's "Ready" LED in sync with Alarmo readiness.
+  domain: automation
+  input:
+    alarmo_entity:
+      name: Alarmo Alarm Entity
+      selector:
+        entity:
+          domain: alarm_control_panel
+
+    ready_update_action:
+      name: Ready Update Action
+      description: >
+        Select the ESPHome ready_update service for your K1 keypad.
+        Leave the data block empty — this blueprint injects the mode booleans.
+      selector:
+        action: {}
+
+mode: parallel
+max_exceeded: silent
+
+trigger:
+  - platform: event
+    event_type: alarmo_ready_to_arm_modes_updated
+    event_data:
+      entity_id: !input alarmo_entity
+
+variables:
+  armed_away: "{{ trigger.event.data.armed_away | default(false) }}"
+  armed_home: "{{ trigger.event.data.armed_home | default(false) }}"
+  armed_night: "{{ trigger.event.data.armed_night | default(false) }}"
+  armed_custom_bypass: "{{ trigger.event.data.armed_custom_bypass | default(false) }}"
+  armed_vacation: "{{ trigger.event.data.armed_vacation | default(false) }}"
+
+action:
+  - alias: "Run Ready Update Action"
+    choose: []
+    default: !input ready_update_action
