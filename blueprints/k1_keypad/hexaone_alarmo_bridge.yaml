@@ -32,20 +32,23 @@ trigger:
 
 action:
   - choose:
+      # Handle failed-to-arm events
       - conditions:
           - condition: template
             value_template: "{{ trigger.event.event_type == 'alarmo_failed_to_arm' }}"
         sequence:
-          - service: esphome.k1_keypad_failed_arm
+          - service: esphome.failed_arm
             target:
               device_id: !input k1_device
             data:
               reason: "{{ trigger.event.data.reason }}"
+
+      # Handle ready-to-arm updates
       - conditions:
           - condition: template
             value_template: "{{ trigger.event.event_type == 'alarmo_ready_to_arm_modes_updated' }}"
         sequence:
-          - service: esphome.k1_keypad_ready_update
+          - service: esphome.ready_update
             target:
               device_id: !input k1_device
             data:
