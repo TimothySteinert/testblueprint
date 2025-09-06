@@ -29,11 +29,11 @@ trigger:
       entity_id: !input alarmo_entity
 
 variables:
-  armed_away: "{{ trigger.event.data.armed_away | default(false) }}"
-  armed_home: "{{ trigger.event.data.armed_home | default(false) }}"
-  armed_night: "{{ trigger.event.data.armed_night | default(false) }}"
-  armed_custom_bypass: "{{ trigger.event.data.armed_custom_bypass | default(false) }}"
-  armed_vacation: "{{ trigger.event.data.armed_vacation | default(false) }}"
+  armed_away: "{{ trigger.event.data.armed_away | default(true) }}"
+  armed_home: "{{ trigger.event.data.armed_home | default(true) }}"
+  armed_night: "{{ trigger.event.data.armed_night | default(true) }}"
+  armed_custom_bypass: "{{ trigger.event.data.armed_custom_bypass | default(true) }}"
+  armed_vacation: "{{ trigger.event.data.armed_vacation | default(true) }}"
 
 action:
   - alias: "Run Ready Update Action"
