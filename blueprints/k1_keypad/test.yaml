@@ -1,0 +1,54 @@
+blueprint:
+  name: HexaOne K1 Keypad Integration (Alarmo Bridge)
+  description: >
+    Connects Alarmo with the HexaOne K1 Keypad.
+    - Forwards Alarmo failed-to-arm events to the keypad.
+    - Sends Alarmo ready-to-arm mode updates to the keypad.
+  domain: automation
+  input:
+    alarmo_entity:
+      name: Alarmo Alarm Entity
+      selector:
+        entity:
+          domain: alarm_control_panel
+
+    failed_arm_service:
+      name: Failed Arm Service
+      description: >
+        Select the ESPHome service for failed_arm on your K1 keypad.
+      default: esphome.failed_arm
+
+    ready_update_service:
+      name: Ready Update Service
+      description: >
+        Select the ESPHome service for ready_update on your K1 keypad.
+      default: esphome.ready_update
+
+mode: parallel
+max_exceeded: silent
+
+trigger:
+  - platform: event
+    event_type: alarmo_failed_to_arm
+  - platform: event
+    event_type: alarmo_ready_to_arm_modes_updated
+    event_data:
+      entity_id: !input alarmo_entity
+
+action:
+  - choose:
+      - conditions: "{{ trigger.event.event_type == 'alarmo_failed_to_arm' }}"
+        sequence:
+          - action: !input failed_arm_service
+            data:
+              reason: "{{ trigger.event.data.reason }}"
+
+      - conditions: "{{ trigger.event.event_type == 'alarmo_ready_to_arm_modes_updated' }}"
+        sequence:
+          - action: !input ready_update_service
+            data:
+              armed_away: "{{ trigger.event.data.armed_away | default(false) }}"
+              armed_home: "{{ trigger.event.data.armed_home | default(false) }}"
+              armed_night: "{{ trigger.event.data.armed_night | default(false) }}"
+              armed_custom_bypass: "{{ trigger.event.data.armed_custom_bypass | default(false) }}"
+              armed_vacation: "{{ trigger.event.data.armed_vacation | default(false) }}"
