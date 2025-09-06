@@ -1,0 +1,56 @@
+blueprint:
+  name: HexaOne K1 Keypad Integration (Alarmo Bridge)
+  description: >
+    Connects Alarmo with the HexaOne K1 Keypad.  
+    - Forwards Alarmo failed-to-arm events (invalid PIN, open sensors, not allowed) to the keypad.  
+    - Sends Alarmo ready-to-arm mode updates to the keypad so the "Ready" LED reflects current conditions.  
+  domain: automation
+  input:
+    alarmo_entity:
+      name: Alarmo Alarm Entity
+      description: Select your Alarmo alarm_control_panel entity.
+      selector:
+        entity:
+          domain: alarm_control_panel
+    k1_device:
+      name: HexaOne K1 Keypad
+      description: Select your HexaOne K1 Keypad device.
+      selector:
+        device:
+          integration: esphome
+
+mode: parallel
+max_exceeded: silent
+
+trigger:
+  - platform: event
+    event_type: alarmo_failed_to_arm
+  - platform: event
+    event_type: alarmo_ready_to_arm_modes_updated
+    event_data:
+      entity_id: !input alarmo_entity
+
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.event_type == 'alarmo_failed_to_arm' }}"
+        sequence:
+          - service: esphome.k1_keypad_event
+            target:
+              device_id: !input k1_device
+            data:
+              reason: "{{ trigger.event.data.reason }}"
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.event_type == 'alarmo_ready_to_arm_modes_updated' }}"
+        sequence:
+          - service: esphome.k1_keypad_ready_update
+            target:
+              device_id: !input k1_device
+            data:
+              armed_away: "{{ trigger.event.data.armed_away | default(false) }}"
+              armed_home: "{{ trigger.event.data.armed_home | default(false) }}"
+              armed_night: "{{ trigger.event.data.armed_night | default(false) }}"
+              armed_custom_bypass: "{{ trigger.event.data.armed_custom_bypass | default(false) }}"
+              armed_vacation: "{{ trigger.event.data.armed_vacation | default(false) }}"
