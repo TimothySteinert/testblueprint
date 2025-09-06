@@ -1,0 +1,61 @@
+blueprint:
+  name: Alarmo → HexaOne K1 Keypad Bridge
+  description: |
+    Bridges Alarmo events (`ready_to_arm` updates and `failed_to_arm`) to a HexaOne K1 Keypad.
+    Requires you to provide the ESPHome service names for both ready updates and failed arm events.
+  domain: automation
+  input:
+    alarmo_entity:
+      name: Alarmo entity
+      description: Select your Alarmo control panel entity
+      selector:
+        entity:
+          domain: alarm_control_panel
+    ready_update_service:
+      name: ESPHome ready_update service
+      description: Enter the full ESPHome service name.
+      default: "esphome.hexaone_k1_keypad_[DEVICE ID]_ready_update"
+      selector:
+        text:
+    failed_arm_service:
+      name: ESPHome failed_arm service
+      description: Enter the full ESPHome service name.
+      default: "esphome.hexaone_k1_keypad_[DEVICE ID]_failed_arm"
+      selector:
+        text:
+
+mode: single
+max_exceeded: silent
+
+trigger:
+  - platform: event
+    event_type: alarmo_ready_to_arm_modes_updated
+    event_data:
+      entity_id: !input alarmo_entity
+    id: ready
+  - platform: event
+    event_type: alarmo_failed_to_arm
+    event_data:
+      entity_id: !input alarmo_entity
+    id: failed
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: ready
+        sequence:
+          - service: !input ready_update_service
+            data:
+              armed_away: "{{ trigger.event.data.armed_away | default(false) }}"
+              armed_home: "{{ trigger.event.data.armed_home | default(false) }}"
+              armed_night: "{{ trigger.event.data.armed_night | default(false) }}"
+              armed_custom_bypass: "{{ trigger.event.data.armed_custom_bypass | default(false) }}"
+              armed_vacation: "{{ trigger.event.data.armed_vacation | default(false) }}"
+      - conditions:
+          - condition: trigger
+            id: failed
+        sequence:
+          - service: !input failed_arm_service
+            data:
+              reason: "{{ trigger.event.data.reason }}"
