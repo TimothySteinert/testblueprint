@@ -1,0 +1,64 @@
+blueprint:
+  name: HexaOne K1 Keypad Integration (Alarmo Bridge)
+  description: >
+    Connects Alarmo with the HexaOne K1 Keypad.
+    
+    - Forwards Alarmo failed-to-arm events (invalid PIN, open sensors, not allowed) to the keypad.
+    - Sends Alarmo ready-to-arm mode updates to the keypad.
+    
+    Select your Alarmo entity, and then use the action selectors to choose the
+    ESPHome services for your K1 keypad (`failed_arm` and `ready_update`).
+  domain: automation
+  input:
+    alarmo_entity:
+      name: Alarmo Alarm Entity
+      selector:
+        entity:
+          domain: alarm_control_panel
+
+    failed_arm_action:
+      name: Failed Arm Action
+      description: >
+        Select the ESPHome `failed_arm` service for your K1 keypad.
+        Do not add a `reason` field — this blueprint fills it automatically.
+      selector:
+        action: {}
+
+    ready_update_action:
+      name: Ready Update Action
+      description: >
+        Select the ESPHome `ready_update` service for your K1 keypad.
+        Do not add arm state booleans — this blueprint fills them automatically.
+      selector:
+        action: {}
+
+mode: parallel
+max_exceeded: silent
+
+trigger:
+  - platform: event
+    event_type: alarmo_failed_to_arm
+  - platform: event
+    event_type: alarmo_ready_to_arm_modes_updated
+    event_data:
+      entity_id: !input alarmo_entity
+
+action:
+  - choose:
+      # Failed Arm events
+      - conditions: "{{ trigger.event.event_type == 'alarmo_failed_to_arm' }}"
+        sequence:
+          - variables:
+              reason: "{{ trigger.event.data.reason }}"
+          - sequence: !input failed_arm_action
+
+      # Ready-to-arm updates
+      - conditions: "{{ trigger.event.event_type == 'alarmo_ready_to_arm_modes_updated' }}"
+        sequence:
+          - variables:
+              armed_away: "{{ trigger.event.data.armed_away | default(false) }}"
+              armed_home: "{{ trigger.event.data.armed_home | default(false) }}"
+              armed_night: "{{ trigger.event.data.armed_night | default(false) }}"
+              armed_custom_bypass: "{{ trigger.event.data.armed_custom_bypass | default(false) }}"
+              armed_vacation: "{{ trigger.event.data.armed_vacation | default(false) }}"
+          - sequence: !input ready_update_action
