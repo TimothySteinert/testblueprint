@@ -1,27 +1,30 @@
 blueprint:
   name: HexaOne K1 Keypad Integration (Alarmo Bridge)
   description: >
-    Connects Alarmo with the HexaOne K1 Keypad.  
-    - Forwards Alarmo failed-to-arm events (invalid PIN, open sensors, not allowed) to the keypad.  
-    - Sends Alarmo ready-to-arm mode updates to the keypad so the "Ready" LED reflects current conditions.  
+    Connects Alarmo with the HexaOne K1 Keypad.
+    - Forwards Alarmo failed-to-arm events to the keypad.
+    - Sends Alarmo ready-to-arm mode updates to the keypad.
   domain: automation
   input:
     alarmo_entity:
       name: Alarmo Alarm Entity
-      description: Select your Alarmo alarm_control_panel entity.
       selector:
         entity:
           domain: alarm_control_panel
-    failed_arm_service:
-      name: ESPHome Failed Arm Service
-      description: Select the `failed_arm` service from your HexaOne K1 device.
+    failed_arm_action:
+      name: Action for Failed Arm
+      description: >
+        Action to run when Alarmo reports a failed arm.
+        Example: Call your ESPHome `failed_arm` service.
       selector:
-        service: {}
-    ready_update_service:
-      name: ESPHome Ready Update Service
-      description: Select the `ready_update` service from your HexaOne K1 device.
+        action: {}
+    ready_update_action:
+      name: Action for Ready Update
+      description: >
+        Action to run when Alarmo reports ready-to-arm state.
+        Example: Call your ESPHome `ready_update` service.
       selector:
-        service: {}
+        action: {}
 
 mode: parallel
 max_exceeded: silent
@@ -36,24 +39,8 @@ trigger:
 
 action:
   - choose:
-      # Handle failed-to-arm events
-      - conditions:
-          - condition: template
-            value_template: "{{ trigger.event.event_type == 'alarmo_failed_to_arm' }}"
-        sequence:
-          - service: !input failed_arm_service
-            data:
-              reason: "{{ trigger.event.data.reason }}"
+      - conditions: "{{ trigger.event.event_type == 'alarmo_failed_to_arm' }}"
+        sequence: !input failed_arm_action
 
-      # Handle ready-to-arm updates
-      - conditions:
-          - condition: template
-            value_template: "{{ trigger.event.event_type == 'alarmo_ready_to_arm_modes_updated' }}"
-        sequence:
-          - service: !input ready_update_service
-            data:
-              armed_away: "{{ trigger.event.data.armed_away | default(false) }}"
-              armed_home: "{{ trigger.event.data.armed_home | default(false) }}"
-              armed_night: "{{ trigger.event.data.armed_night | default(false) }}"
-              armed_custom_bypass: "{{ trigger.event.data.armed_custom_bypass | default(false) }}"
-              armed_vacation: "{{ trigger.event.data.armed_vacation | default(false) }}"
+      - conditions: "{{ trigger.event.event_type == 'alarmo_ready_to_arm_modes_updated' }}"
+        sequence: !input ready_update_action
