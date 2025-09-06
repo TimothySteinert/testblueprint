@@ -1,5 +1,5 @@
 blueprint:
-  name: Alarmo → HexaOne K1 Keypad Bridge
+  name: Alarmo HexaOne K1 Keypad Bridge
   description: |
     Bridges Alarmo events (`ready_to_arm` updates and `failed_to_arm`) to a HexaOne K1 Keypad.
     Requires you to provide the ESPHome service names for both ready updates and failed arm events.
