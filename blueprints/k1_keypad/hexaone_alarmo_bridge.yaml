@@ -36,7 +36,7 @@ action:
           - condition: template
             value_template: "{{ trigger.event.event_type == 'alarmo_failed_to_arm' }}"
         sequence:
-          - service: esphome.k1_keypad_event
+          - service: esphome.k1_keypad_failed_arm
             target:
               device_id: !input k1_device
             data:
